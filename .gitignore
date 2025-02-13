@@ -1,5 +1,12 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*/__pycache__/
+*/*/__pycache__/
+*/*/*/__pycache__/
+*/*/*/*/__pycache__/
+*/*/*/*/*/__pycache__/
+*/*/*/*/*/*/__pycache__/
+website
 *.py[cod]
 *$py.class
 
