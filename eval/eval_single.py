@@ -163,7 +163,9 @@ class SingleShapeEvaluator(ShapeEvaluator):
 
         # also save raw errors
         raw_data = errors_all
-        pkl.dump(raw_data, open(osp.join(self.outpath, 'raw', osp.basename(outfile.replace('.json', '.pkl'))), 'wb'))
+        outfile = osp.join(self.outpath, 'raw', osp.basename(outfile.replace('.json', '.pkl')))
+        os.makedirs(osp.dirname(outfile), exist_ok=True)
+        pkl.dump(raw_data, open(outfile, 'wb'))
         print("Results saved to", outfile)
 
     def get_outfile(self, args, prefix):
@@ -209,7 +211,7 @@ class SingleShapeEvaluator(ShapeEvaluator):
 
     @staticmethod
     def get_parser():
-        parser = SingleShapeEvaluator.get_parser()
+        parser = ShapeEvaluator.get_parser()
         parser.add_argument('-split', default='configs/splits/behave-test.json')
         parser.add_argument('-i', '--id', help='additional information/identification')
         return parser

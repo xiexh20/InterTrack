@@ -102,12 +102,67 @@ class PointCloudProjectionModelConfig:
     consistent_center: bool = True  # use consistent center prediction by CCD-3DR
     voxel_resolution_multiplier: float = 1  # increase network voxel resolution
 
+    # For SO3 diffusion
+    so3_eps_scale: float = 1.0  # so3 diffusion noise scale
+    so3_rot_type: str = 'rela'
+    so3_loss_type: str = 'rot-l2'
+    pose_feat_dim: int = 128
+    smpl_pose_dim: int = 144  # conditional SMPL pose dimension
+    smpl_cond_type: str = 'theta'  # SMPL conditioning type
+    norm_layer: str = 'none'  # normalization for features of pose, image
+    add_src_key_mask: float = -1.0  # threshold below which the frame will be ignored
+    nnl_beta: float = 0.5  # for uncertainty prediction
+    lw_rot_acc: float = 0.1  # for acceleration loss weights
+
     # predict binary segmentation
     predict_binary: bool = False # True for stage 1 model, False for others
     lw_binary: float = 3.0  # to have roughly the same magnitude of the binary segmentation loss
     # for separate model
     binary_training_noise_std: float = 0.1  # from github doc for predicting color
     self_conditioning: bool = False
+
+    # add noise to camera pose
+    cam_noise_std: float = 0.0
+
+    # For PVCNN-AE
+    v2v_loss: float = -1.0
+
+    # Optimization hyper parameters
+    obj_lw_mask: float = 0.001
+    obj_lw_chamf: float = 10.0
+    obj_lw_dt: float = 0.0001
+    obj_lw_temp_t: float = 200.0
+    obj_lw_temp_r: float = 1000.0
+    obj_lw_temp_s: float = 1000.0
+    obj_lw_temp_v: float = 200.  # temporal loss weights applied to points
+    obj_lw_ae: float = 0.  # use AE to regularize the shape
+    hoi_lw_cont: float = 20.
+    hoi_lw_cd_h: float = 0.01
+    hoi_lw_temp_h: float = 100
+    hoi_lr_hum: float = 0.001
+    hoi_cont_thres: float = 0.02  # contact distance threshold
+
+    obj_opt_noae: bool = True
+    obj_opt_t: bool = False
+    obj_opt_r: bool = False
+    obj_opt_s: bool = False
+    obj_opt_shape: bool = True  # by default optimize the shape
+    obj_opt_lr: float = 0.0006  # loss weights for the optimization parameters
+    obj_opt_occ_thres: float = 0.5
+    obj_opt_noise: float = 0.1  # noise level added to the original reconstruction
+    hum_opt_lat: bool = True  # human latent code
+    hum_opt_t: bool = False  # translation
+    hum_opt_s: bool = False  # scale
+    hum_opt_betas: bool = False
+    hum_lw_mask: float = 0.
+    hum_lw_dt: float = 0.
+    hum_lw_temp_hn: float = 0.0  # temporal smoothness in normalized space
+    hum_lw_cd: float = 100.
+    hum_lw_lat: float = 10.0  # human latent code regularization
+    hum_lw_rigid: float = 0.  # rigidity loss, to prevent large deformation of human
+    hum_lw_bprior: float = 1e-5  # human body pose prior
+    hum_lw_hprior: float = 1e-5  # hand pose prior
+    hum_lw_kpts: float = 0.  # 2d keypoint loss weight
 
 @dataclass
 class PVCNNAEModelConfig(PointCloudProjectionModelConfig):
@@ -208,6 +263,8 @@ class BehaveDatasetConfig(PointCloudDatasetConfig):
     fix_sample: bool = True
     behave_dir: str = "/BS/xxie-5/static00/behave_release/sequences/" # TODO: change to your local BEHAVE path
     procigen_dir: str = '/BS/xxie-6/static00/synthesize' # TODO: change to your local ProciGen path
+    behave_packed_dir: str = "/scratch/inf0/user/xxie/behave-packed/" # packed behave dir path
+    demo_data_path: str = '/BS/xxie-2/static00/InterTrack-demo-data' # dir to the demo data
     split_file: str = "" # TODO: specify you dataset split file here, one such example can be downloaded from https://edmond.mpg.de/file.xhtml?fileId=251365&version=4.0
     scale_factor: float = 7.0  # use the same as shapenet
     sample_ratio_hum: float = 0.5
@@ -233,6 +290,21 @@ class BehaveDatasetConfig(PointCloudDatasetConfig):
     std_coverage: float=3.5 # a heuristic value to estimate translation
 
     v2v_path: str = '' # object v2v corr path
+
+    # video dataset
+    clip_len: int = 30  # length for one small clip
+    window: int = 1  # sliding window, distance between two clips
+    smpl_src: str = 'gt'  # use which src of smpl for object pose conditioning
+    align_objav: bool = False  # align objaverse to shapenet?
+    all_shapenet_pose: bool = False  # all pose is from shapenet canonical space?
+
+    # optimization for video
+    load_obj_pose: bool = False
+    mask_dilate_size: int = 5  # object mask dilation size
+    pred_obj_pose_path: Optional[str] = None  # the path to object pose results
+    hoi_opt_obj_shape_path: Optional[str] = None  # the path to the optimized object shape results
+    hoi_opt_hum_shape_path: Optional[str] = None  # the path to the optimized human shape results
+    cam_id: int = 1  # which camera to be used
 
 @dataclass
 class ShapeDatasetConfig(BehaveDatasetConfig):

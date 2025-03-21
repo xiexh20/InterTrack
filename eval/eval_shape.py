@@ -22,6 +22,7 @@ class ShapeEvaluator:
                       # CUBE_SIDE_LEN/10, CUBE_SIDE_LEN/5
                                ]
         self.outpath= 'results'
+        os.makedirs(self.outpath, exist_ok=True)
 
 
     def evaluate(self, args):

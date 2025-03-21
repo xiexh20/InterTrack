@@ -56,10 +56,11 @@ class SeqInfo:
         for name in path_names:
             if data[name] is not None:
                 path = join(seq, data[name])
-                if not isdir(path):
-                    path = data[name] # abs path
-                    if "Date0" in seq or "ICap" in seq:  # check config path for behave and intercap dataset
-                        assert isdir(path), f'given path {path} does not exist!'
+                # if not isdir(path):
+                #     path = data[name] # abs path
+                #     if "Date0" in seq or "ICap" in seq:  # check config path for behave and intercap dataset
+                #         import pdb; pdb.set_trace()
+                #         assert isdir(path), f'given path {path} does not exist!'
                 data[name] = path
         return data
 

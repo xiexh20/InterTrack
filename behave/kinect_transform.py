@@ -10,6 +10,15 @@ from behave.seq_utils import SeqInfo
 from behave.utils import load_intrinsics, load_kinect_poses_back, load_kinect_poses
 from psbody.mesh import Mesh
 
+def inverse_Rt(r, t):
+    "compute inverse transformation for the given R and t"
+    trans = np.eye(4)
+    trans[:3, :3] = r
+    trans[:3, 3] = t
+    trans_back = np.linalg.inv(trans)  # now the y-axis point down
+    r_back = trans_back[:3, :3]
+    t_back = trans_back[:3, 3]
+    return r_back, t_back
 
 class KinectTransform:
     "transform between different kinect cameras, sequence specific"
@@ -20,9 +29,13 @@ class KinectTransform:
             self.intrinsics = None
         else:
             self.intrinsics = load_intrinsics(self.seq_info.get_intrinsic(), self.kids)
-        rot, trans = load_kinect_poses(self.seq_info.get_config(), self.kids)
+        # rot, trans = load_kinect_poses(self.seq_info.get_config(), self.kids)
+        rot, trans = self.load_local2world()
         self.local2world_R, self.local2world_t = rot, trans
-        rot, trans = load_kinect_poses_back(self.seq_info.get_config(), self.kids)
+        # rot, trans = load_kinect_poses_back(self.seq_info.get_config(), self.kids)
+        # Compute world to local camera transformation
+        Rt = [inverse_Rt(r, t) for r, t in zip(rot, trans)]
+        rot, trans = [x[0] for x in Rt], [x[1] for x in Rt]
         self.world2local_R, self.world2local_t = rot, trans
 
     def world2color_mesh(self, mesh:Mesh, kid):
@@ -79,6 +92,19 @@ class KinectTransform:
         kinect = self.intrinsics[kid]
         pc = kinect.dmap2pc(depth)
         return pc
+
+    def load_local2world(self):
+        """
+        For some sequences, the camera extrinsics are packed inside info.json file
+        :return:
+        """
+        if 'extrinsic_params' in self.seq_info.info:
+            pose_calibs = self.seq_info.info['extrinsic_params']
+            rot = [np.array(pose_calibs[x]['rotation']).reshape((3, 3)) for x in self.seq_info.kids]
+            trans = [np.array(pose_calibs[x]['translation']) for x in self.seq_info.kids]
+        else:
+            rot, trans = load_kinect_poses(self.seq_info.get_config(), self.kids)
+        return rot, trans
 
 
 

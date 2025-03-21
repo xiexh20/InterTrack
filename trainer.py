@@ -340,8 +340,17 @@ class Trainer(object):
         # Output dir
         output_dir: Path = Path(output_dir)
 
-        # PyTorch3D IO
-        # io = IO()
+        # for computing object visibility
+        from pytorch3d.renderer import PointsRasterizationSettings, PointsRasterizer
+        rend_size = 256
+        raster_point_radius: float = 0.0075
+        raster_settings = PointsRasterizationSettings(
+            image_size=(rend_size, rend_size),
+            radius=raster_point_radius,
+            points_per_pixel=1,
+            bin_size=0,
+        )
+        rasterizer = PointsRasterizer(raster_settings=raster_settings)
 
         end_idx = cfg.run.batch_end if cfg.run.batch_end is not None else len(dataloader)
         # Visualize
@@ -421,6 +430,36 @@ class Trainer(object):
                     # Save camera
                     filename = filestr.format(dir='metadata', category=sequence_category, name=sequence_name, ext='pth')
                     metadata = self.get_metadata(batch, i)
+
+                    ## Computing point visibility
+                    camera = metadata['camera']
+                    # first project object points only, without considering the human points
+                    pc: Pointclouds = output[i]
+                    pts, colors = pc.points_list()[0], pc.features_list()[0]
+                    mask_hum = colors[:, 2] > 0.5
+                    pc_obj = pts[~mask_hum]
+                    fragments = rasterizer(Pointclouds([pc_obj.float().to('cuda')]), cameras=camera)  # (B, H, W, R)
+                    fragments_idx = fragments.idx.long()
+                    visible_pixels = (fragments_idx > -1)  # (B, H, W, R)
+                    points_to_visible_pixels = fragments_idx[visible_pixels]
+                    mask_obj = np.zeros((len(pc_obj),), dtype=bool)
+                    mask_obj[points_to_visible_pixels.cpu().numpy()] = True  # visible points
+
+                    # now consider project human + object points
+                    fragments = rasterizer(Pointclouds([pts.float().to('cuda')]), cameras=camera)  # (B, H, W, R)
+                    fragments_idx = fragments.idx.long()
+                    visible_pixels = (fragments_idx > -1)  # (B, H, W, R)
+                    points_to_visible_pixels = fragments_idx[visible_pixels]
+                    mask_ho = np.zeros((len(pts),), dtype=bool)
+                    mask_ho[points_to_visible_pixels.cpu().numpy()] = True  # visible points
+                    mask_ho_obj = mask_ho[~mask_hum.cpu().numpy()]  # pick the points belong to object
+
+                    # check how many objects are still visible after adding human
+                    vis = np.sum(mask_ho_obj) / np.sum(mask_obj)
+                    metadata['obj_visibility'] = vis
+                    # print("Visibility:", vis)
+                    ## End of computing visibility
+
                     torch.save(metadata, filename)
 
                     # Save evolutions

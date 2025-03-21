@@ -63,17 +63,26 @@ class BehaveCrossAttnDataset(BehaveDataset):
         elif self.test_transl_type == 'estimated-2d':
             _, _, crop_center_ho, crop_size_ho = self.get_crop_params(mask_hum, mask_obj, 1.0)
             is_behave = self.is_behave_dataset(rgb_full.shape[1])
-            assert rgb_full.shape[1] in [2048, 1920], 'the image is not normalized to BEHAVE or ICAP size!'
+            # assert rgb_full.shape[1] in [2048, 1920], 'the image is not normalized to BEHAVE or ICAP size!'
+            # indices = np.indices(rgb_full.shape[:2])
+            # assert np.sum(mask_obj > 127) > 5, f'not enough object mask found for {rgb_file}'
+            # pts_h = np.stack([indices[1][mask_hum > 127], indices[0][mask_hum > 127]], -1)
+            # pts_o = np.stack([indices[1][mask_obj > 127], indices[0][mask_obj > 127]], -1)
+
+            scale_ratio = self.check_image_shape(mask_hum, mask_obj, rgb_full)
             indices = np.indices(rgb_full.shape[:2])
-            assert np.sum(mask_obj > 127) > 5, f'not enough object mask found for {rgb_file}'
+            # assert np.sum(mask_obj > 127) > 5, f'not enough object mask found for {rgb_file}'
             pts_h = np.stack([indices[1][mask_hum > 127], indices[0][mask_hum > 127]], -1)
             pts_o = np.stack([indices[1][mask_obj > 127], indices[0][mask_obj > 127]], -1)
+            if len(pts_o) < 3:
+                print(f"Warning: object fully occluded for {rgb_file}!")  # Aug 10, use human to replace obj, in case of full occlusion
+                pts_o = pts_h  # use human mask as the object, this is rough estimation
             proj_cent_est = (np.mean(pts_h, 0) + np.mean(pts_o, 0)) / 2.
-            transl_estimate = compute_translation(proj_cent_est, crop_size_ho, is_behave, self.std_coverage)
+            transl_estimate = compute_translation(proj_cent_est, crop_size_ho, is_behave, self.std_coverage, scale_ratio)
             T_ho_scaled = transl_estimate / 7.0 * np.array([-1, -1, 1.])
             radius_ho = 0.5
             cent_ho = transl_estimate / 7.0
-            print(f"Cross-attn dataset estimated 2d: {proj_cent_est}, 3D: {transl_estimate / 7.}")
+            # print(f"Cross-attn dataset estimated 2d: {proj_cent_est}, 3D: {transl_estimate / 7.}")
 
         # crop for H+O
         Kroi, objmask_fullcrop, psmask_fullcrop, rgb_fullcrop = self.crop_full_image(mask_hum.copy(),
@@ -126,6 +135,7 @@ class BehaveCrossAttnDataset(BehaveDataset):
             'radius': radius_ho,
 
             "image_size_hw": torch.tensor(self.input_size), # for metadata
+            "frame_index": torch.tensor([idx]) # a unique index for this image, will be used to index the corresponding pose parameters
 
         }
 
@@ -169,6 +179,16 @@ class BehaveCrossAttnDataset(BehaveDataset):
                 **pred_dict
             }
 
+        # for object optimization
+        if self.pred_obj_pose_path is not None:
+            # load predicted object rotation/translation
+            ss = rgb_file.split(os.sep)
+            pred_file = osp.join(self.pred_obj_pose_path, ss[-3], ss[-2] + ".pth")
+            rot_pred = torch.load(pred_file, map_location='cpu')['rotation']
+            data_dict = {
+                **data_dict,
+                'rot_pred': rot_pred.float()
+            }
 
         return data_dict
 
@@ -195,7 +215,6 @@ class BehaveCrossAttnDataset(BehaveDataset):
     def upsample_predicted_pc(self, pc_obj):
         num_samples = int(self.num_samples*self.sample_ratio_hum) # here we assume same number of samples for human and object
         if len(pc_obj) > num_samples:
-            # TODO: use farthest point sample
             ind_obj = np.random.choice(len(pc_obj), num_samples)
         else:
             # original pc + some random points
@@ -214,3 +233,7 @@ class BehaveCrossAttnTest(BehaveCrossAttnDataset):
         samples_obj = np.random.randn(num_obj, 3)
 
         return samples_smpl, samples_obj
+
+    def load_kinect_transforms(self, behave_path, procigen_path):
+        self.kin_transforms = {} # do not load for test
+

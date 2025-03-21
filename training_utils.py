@@ -296,6 +296,7 @@ def resume_from_checkpoint(cfg: ProjectConfig, model, optimizer=None, scheduler=
             cfg.checkpoint.resume = ckpt_file
         else:
             print(f"No checkpoint found in outputs/{cfg.run.name}/single/!")
+            assert cfg.run.job == 'train', 'can only do training without a checkpoint!'
             return TrainState()
 
     # If resuming, load model state dict

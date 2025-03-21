@@ -122,7 +122,7 @@ def get_dataset(cfg: ProjectConfig):
                                       collate_fn=collate_batched_meshes,
                                     num_workers=cfg.dataloader.num_workers, shuffle=False)
 
-    elif cfg.dataset.type in ['behave', 'behave-attn']:
+    elif cfg.dataset.type in ['behave', 'behave-attn', 'behave-test', 'behave-attn-test']:
         from .behave_dataset import BehaveDataset, BehaveTestOnly
         from .behave_paths import DataPaths
         from configs.structured import BehaveDatasetConfig
@@ -168,7 +168,11 @@ def get_dataset(cfg: ProjectConfig):
                                   aug_blur=cfg.dataset.aug_blur,
                                   std_coverage=cfg.dataset.std_coverage,
                                    behave_path=dataset_cfg.behave_dir,
-                                   procigen_path=dataset_cfg.procigen_dir)
+                                   procigen_path=dataset_cfg.procigen_dir,
+                                   demo_data_path=dataset_cfg.demo_data_path,
+                                   behave_packed_dir=dataset_cfg.behave_packed_dir,
+                                   pred_obj_pose_path=cfg.dataset.pred_obj_pose_path, # for obj optimization
+                                   )
         # we do cross validation, the validation set is a random subset of full test set
         dataset_val = val_datatype(val_paths, dataset_cfg.max_points, dataset_cfg.fix_sample,
                                       (dataset_cfg.image_size, dataset_cfg.image_size),
@@ -182,8 +186,95 @@ def get_dataset(cfg: ProjectConfig):
                                    sep_same_crop=cfg.dataset.sep_same_crop,
                                    std_coverage=cfg.dataset.std_coverage,
                                    behave_path=dataset_cfg.behave_dir,
-                                   procigen_path=dataset_cfg.procigen_dir
+                                   procigen_path=dataset_cfg.procigen_dir,
+                                   demo_data_path=dataset_cfg.demo_data_path,
+                                   behave_packed_dir=dataset_cfg.behave_packed_dir,
+                                   pred_obj_pose_path=cfg.dataset.pred_obj_pose_path,
                                    )
+        dataloader_train = DataLoader(dataset_train, batch_size=cfg.dataloader.batch_size,
+                                      collate_fn=collate_batched_meshes,
+                                      num_workers=cfg.dataloader.num_workers, shuffle=True)
+        shuffle = cfg.run.job == 'train'
+        dataloader_val = DataLoader(dataset_val, batch_size=cfg.dataloader.batch_size,
+                                    collate_fn=collate_batched_meshes,
+                                    num_workers=cfg.dataloader.num_workers, shuffle=shuffle)
+        dataloader_vis = DataLoader(dataset_val, batch_size=cfg.dataloader.batch_size,
+                                    collate_fn=collate_batched_meshes,
+                                    num_workers=cfg.dataloader.num_workers, shuffle=shuffle)
+
+    elif cfg.dataset.type in ['behave-video', 'behave-video-test', ]:
+        from .behave_video import BehaveObjectVideoDataset
+        from .behave_video import BehaveObjectVideoTestDataset
+        from configs.structured import BehaveDatasetConfig
+        from .behave_paths import DataPaths
+
+        dataset_cfg: BehaveDatasetConfig = cfg.dataset
+        # print(dataset_cfg.behave_dir)
+        train_paths, val_paths = DataPaths.load_splits(dataset_cfg.split_file, dataset_cfg.behave_dir)
+        bs = cfg.dataloader.batch_size
+        # num_batches_total = int(np.ceil(len(val_paths) / cfg.dataloader.batch_size))
+        # num_batches_total = 10000000
+        # end_idx = cfg.run.batch_end if cfg.run.batch_end is not None else num_batches_total
+        # val_paths = val_paths[cfg.run.batch_start * bs:end_idx * bs]
+        if cfg.dataset.type == 'behave-video':
+            train_type, val_type = BehaveObjectVideoDataset, BehaveObjectVideoDataset
+        elif cfg.dataset.type == 'behave-video-test':
+            train_type, val_type = BehaveObjectVideoTestDataset, BehaveObjectVideoTestDataset
+        else:
+            raise ValueError(f'unknown dataset type {cfg.dataset.type}')
+        dataset_train = train_type(train_paths, dataset_cfg.clip_len, dataset_cfg.window,
+                                   dataset_cfg.max_points, dataset_cfg.fix_sample,
+                                   (dataset_cfg.image_size, dataset_cfg.image_size),
+                                   split='train', sample_ratio_hum=dataset_cfg.sample_ratio_hum,
+                                   normalize_type=dataset_cfg.normalize_type, smpl_type='gt',
+                                   # load_corr_points=dataset_cfg.load_corr_points,
+                                   uniform_obj_sample=dataset_cfg.uniform_obj_sample,
+                                   bkg_type=dataset_cfg.bkg_type,
+                                   bbox_params=dataset_cfg.bbox_params,
+                                   pred_binary=cfg.model.predict_binary,
+                                   ho_segm_pred_path=cfg.dataset.ho_segm_pred_path,
+                                   compute_closest_points=cfg.model.model_name == 'pc2-diff-ho-tune-newloss',
+                                   use_gt_transl=cfg.dataset.use_gt_transl,
+                                   cam_noise_std=cfg.dataset.cam_noise_std,
+                                   sep_same_crop=cfg.dataset.sep_same_crop,
+                                   aug_blur=cfg.dataset.aug_blur,
+                                   std_coverage=cfg.dataset.std_coverage,
+                                   v2v_path=cfg.dataset.v2v_path,
+                                   pred_obj_pose_path=cfg.dataset.pred_obj_pose_path,
+                                   align_objav=cfg.dataset.align_objav,
+                                   smpl_src=cfg.dataset.smpl_src,
+                                   all_shapenet_pose=cfg.dataset.all_shapenet_pose,
+                                   behave_path=dataset_cfg.behave_dir,
+                                   procigen_path=dataset_cfg.procigen_dir,
+                                   demo_data_path=dataset_cfg.demo_data_path,
+                                   behave_packed_dir=dataset_cfg.behave_packed_dir
+                                   )
+
+        dataset_val = val_type(val_paths, dataset_cfg.clip_len, dataset_cfg.window,
+                               dataset_cfg.max_points, dataset_cfg.fix_sample,
+                               (dataset_cfg.image_size, dataset_cfg.image_size),
+                               split='val', sample_ratio_hum=dataset_cfg.sample_ratio_hum,
+                               normalize_type=dataset_cfg.normalize_type, smpl_type=dataset_cfg.smpl_type,
+                               # load_corr_points=dataset_cfg.load_corr_points,
+                               test_transl_type=dataset_cfg.test_transl_type,
+                               uniform_obj_sample=dataset_cfg.uniform_obj_sample,
+                               bkg_type=dataset_cfg.bkg_type,
+                               bbox_params=dataset_cfg.bbox_params,
+                               pred_binary=cfg.model.predict_binary,
+                               ho_segm_pred_path=cfg.dataset.ho_segm_pred_path,
+                               use_gt_transl=cfg.dataset.use_gt_transl,
+                               sep_same_crop=cfg.dataset.sep_same_crop,
+                               std_coverage=cfg.dataset.std_coverage,
+                               v2v_path=cfg.dataset.v2v_path,
+                               pred_obj_pose_path=cfg.dataset.pred_obj_pose_path,
+                               smpl_src=cfg.dataset.smpl_src,
+                               all_shapenet_pose=cfg.dataset.all_shapenet_pose,
+                               behave_path=dataset_cfg.behave_dir,
+                               procigen_path=dataset_cfg.procigen_dir,
+                               demo_data_path=dataset_cfg.demo_data_path,
+                               behave_packed_dir=dataset_cfg.behave_packed_dir
+                               )
+        # import pdb;pdb.set_trace()
         dataloader_train = DataLoader(dataset_train, batch_size=cfg.dataloader.batch_size,
                                       collate_fn=collate_batched_meshes,
                                       num_workers=cfg.dataloader.num_workers, shuffle=True)

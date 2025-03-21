@@ -43,7 +43,8 @@ class BehaveDataset(Dataset):
                  std_coverage=3.5,
                  debug=False,
                  behave_path='',
-                 procigen_path=''
+                 procigen_path='',
+                 **kwargs
                  ):
         self.data_paths = data_paths
         self.num_samples = num_samples
@@ -54,13 +55,10 @@ class BehaveDataset(Dataset):
         self.samples_cache = {}
         self.meshes_cache = {}
 
-        self.kin_transforms = {
-            f"Date{d:02d}": KinectTransform(date_seqs[f'Date{d:02d}'](behave_path), no_intrinsic=True) for d in range(1,8)
-        }
-        self.kin_transforms = {
-            **self.kin_transforms,
-            **{"Date09": KinectTransform(date_seqs['Date09'](procigen_path), no_intrinsic=True)}
-        }
+        # additional data paths
+        self.behave_packed_dir = kwargs.get('behave_packed_dir', None)
+        self.demo_data_path = kwargs.get('demo_data_path', None)
+        self.load_kinect_transforms(behave_path, procigen_path)
 
         # some constants
         # camera transform from opencv to pytorch3d
@@ -78,10 +76,6 @@ class BehaveDataset(Dataset):
             assert self.normalize_type == 'smpl'
             print("Using keypoints to initialize camera parameters")
 
-        # shapenet paths
-        self.shapenet_corr_root = "/BS/xxie-2/static00/shapenet"
-        self.uniform_obj_sample = uniform_obj_sample # combined with object
-
         # for direct translation predictor
         self.test_transl_type = test_transl_type
         assert self.test_transl_type in ['norm', 'estimated', 'normalized', 'estimated-2d'], f'unknown transl {test_transl_type}!'
@@ -89,11 +83,6 @@ class BehaveDataset(Dataset):
         self.bkg_type = bkg_type # if none: mask bkg out, otherwise keep them
         print("std value used to estimate t:", std_coverage)
         assert self.bkg_type in ['none', 'original']
-
-        self.focal = np.array([979.7844, 979.840]) # TODO: take InterCap parameters into account
-        self.principal_point = np.array([1018.952, 779.486])
-        self.behave_image_size = np.array([2048, 1536])
-        self.icap_image_size = np.array([1920, 1080])
 
         # binary segmentation
         self.predict_binary = pred_binary
@@ -113,6 +102,23 @@ class BehaveDataset(Dataset):
         # print(f"Aug_blur value={aug_blur}...")
 
         self.DEBUG = debug
+        self.load_obj_pose = kwargs.get('load_obj_pose', False)
+        self.pred_obj_pose_path = kwargs.get('pred_obj_pose_path', None)
+        self.mask_dilate_size = kwargs.get('mask_dilate_size', 5)
+        self.load_op_kpts = kwargs.get('load_op_kpts', False)  # load openpose keypoints
+
+        self.behave2shapenet = pkl.load(open(osp.join(self.demo_data_path, 'behave2shapenet_alignment.pkl'), 'rb'))
+        print("Predicted object pose path:", self.pred_obj_pose_path, 'dilation size:', self.mask_dilate_size)
+
+    def load_kinect_transforms(self, behave_path, procigen_path):
+        self.kin_transforms = {
+            f"Date{d:02d}": KinectTransform(date_seqs[f'Date{d:02d}'](self.demo_data_path), no_intrinsic=True) for d in
+            range(1, 8)
+        }
+        self.kin_transforms = {
+            **self.kin_transforms,
+            **{"Date09": KinectTransform(date_seqs['Date09'](self.demo_data_path), no_intrinsic=True)}
+        }
 
     def __getitem__(self, idx):
         # ret = self.get_item(idx)
@@ -195,17 +201,29 @@ class BehaveDataset(Dataset):
         cent_transform = np.eye(4)  # the transform applied to the mesh that moves it back to kinect camera frame
         transl_estimate = np.zeros(4) # dummy data
         if self.test_transl_type == 'estimated-2d':
-            assert rgb_full.shape[1] in [2048, 1920], 'the image is not normalized to BEHAVE or ICAP size!'
+            # assert rgb_full.shape[1] in [2048, 1920], f'the image {rgb_full.shape} is not normalized to BEHAVE or ICAP size!'
+            # indices = np.indices(rgb_full.shape[:2])
+            # assert np.sum(mask_obj > 127) > 5, f'not enough object mask found for {rgb_file}'
+            scale_ratio = self.check_image_shape(mask_hum, mask_obj, rgb_full)
             indices = np.indices(rgb_full.shape[:2])
-            assert np.sum(mask_obj > 127) > 5, f'not enough object mask found for {rgb_file}'
+            # assert np.sum(mask_obj > 127) > 5, f'not enough object mask found for {rgb_file}'
             pts_h = np.stack([indices[1][mask_hum > 127], indices[0][mask_hum > 127]], -1)
             pts_o = np.stack([indices[1][mask_obj > 127], indices[0][mask_obj > 127]], -1)
+            if len(pts_o) < 3:
+                print(f"Warning: object fully occluded for {rgb_file}!")  # Aug 10, use human to replace obj, in case of full occlusion
+                pts_o = pts_h  # use human mask as the object, this is rough estimation
             proj_cent_est = (np.mean(pts_h, 0) + np.mean(pts_o, 0)) / 2.
-            transl_estimate = compute_translation(proj_cent_est, crop_size_ho, is_behave, self.std_coverage)
+            transl_estimate = compute_translation(proj_cent_est, crop_size_ho, is_behave, self.std_coverage, scale_ratio)
+            # pts_h = np.stack([indices[1][mask_hum > 127], indices[0][mask_hum > 127]], -1)
+            # pts_o = np.stack([indices[1][mask_obj > 127], indices[0][mask_obj > 127]], -1)
+            # proj_cent_est = (np.mean(pts_h, 0) + np.mean(pts_o, 0)) / 2.
+            # transl_estimate = compute_translation(proj_cent_est, crop_size_ho, is_behave, self.std_coverage)
             cent_transform[:3, 3] = transl_estimate / 7.0
             radius = 0.5  # don't do normalization anymore
             cent = transl_estimate / 7.0
             # print(f"Estimated 2d: {proj_cent_est}, 3D: {transl_estimate/7.}")
+
+        cent_transform[:3, 3] = cent  # make sure the points have correct translation
 
         comb = np.matmul(self.opencv2py3d, cent_transform)
         R = torch.from_numpy(comb[:3, :3]).float()
@@ -272,6 +290,16 @@ class BehaveDataset(Dataset):
         data_dict = self.add_additional_data(data_dict)
         return data_dict
 
+    def check_image_shape(self, mask_hum, mask_obj, rgb_full):
+        hw_ratio = rgb_full.shape[0] / rgb_full.shape[1]
+        assert hw_ratio in [3 / 4., 9 / 16.], f'the image shape {rgb_full.shape, hw_ratio} is not  to BEHAVE or ICAP size!'
+
+        if hw_ratio == 3 / 4. and rgb_full.shape[1] != 2048:
+            ratio = rgb_full.shape[1]/2048.
+        else:
+            ratio = rgb_full.shape[1]/1920.
+        return ratio
+
     def add_additional_data(self, data_dict):
         return data_dict
 
@@ -329,6 +357,8 @@ class BehaveDataset(Dataset):
             "cent_obj_pred": torch.from_numpy(cent_obj).float(),
             "radius_hum_pred": torch.tensor([scale_hum]).float(),
             "radius_obj_pred": torch.tensor([scale_obj]).float(),
+
+            'pred_file': pred_file  # path to the predicted pc
         }
 
         return pred_dict
@@ -416,8 +446,8 @@ class BehaveDataset(Dataset):
             samples_smpl = smpl.sample(num_smpl)
             samples_obj = obj.sample(num_obj)
 
-            # Save samples to cache for fast access next time
-            self.samples_cache[img_key] = (samples_smpl, samples_obj)
+            # Save samples to cache for fast access next time, Don't do this as it can go OOM
+            # self.samples_cache[img_key] = (samples_smpl, samples_obj)
         return samples_obj, samples_smpl
 
     def get_cache_key(self, rgb_file):
@@ -507,6 +537,8 @@ class BehaveDataset(Dataset):
         if 'Date04_Subxx' in seq_name or 'Date09_Subxx' in seq_name:
             # synthetic ProciGen dataset
             return 'fit01', 'fit01'
+        elif 'behave-fps30' in rgb_file or 'demo-data' in rgb_file:
+            return  'fit03', 'fit01-smooth'
         elif "Date0" in seq_name:
             # behave real sequences 
             # TODO: if you are using behvae-30fps data, change this to 'fit03', 'fit01-smooth'
@@ -527,3 +559,6 @@ class BehaveTestOnly(BehaveDataset):
         samples_obj = np.random.randn(num_obj, 3)
 
         return samples_smpl, samples_obj
+
+    def load_kinect_transforms(self, behave_path, procigen_path):
+        self.kin_transforms = {} # do not load

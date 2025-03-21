@@ -30,114 +30,65 @@ Official implementation for 3DV'25 paper: InterTrack: Tracking Human Object Inte
 - xxx, code released, hello world!  
 
 ## Dependencies
-The code is tested on `torch=1.12.1+cu113, cuda11.3, debian11`. We recommend using anaconda environment:
+The code is tested on `torch=1.12.1+cu121, cuda12.1, debian11`. We recommend using anaconda environment:
 ```shell
-conda create -n hdm python=3.8
-conda activate hdm 
+conda create -n intertrack python=3.8
+conda activate intertrack 
 ```
 Required packages can be installed by:
 ```shell
 pip install -r pre-requirements.txt # Install pytorch and others
 pip install -r requirements.txt     # Install pytorch3d from source
 ```
-In case pytorch3d compilation failed, you can tried to install prebuilt wheels. In this case, pytorch should also be reinstalled. 
-The following combination of torch and pytorch3d has been tested to be compatible:
+
+**SMPL body models**: We use SMPL-H (mano_v1.2) from [this website](https://mano.is.tue.mpg.de/download.php). 
+Download and unzip to a local path and modify in SMPL_MODEL_ROOT in `lib_smpl/const.py`.
+
+
+
+## Quick start
+### Download checkpoints
 ```shell
-pip install torch==1.11.0+cu113 torchvision==0.12.0+cu113 torchaudio==0.11.0 --extra-index-url https://download.pytorch.org/whl/cu113
-pip install fvcore iopath
-pip install --no-index --no-cache-dir pytorch3d -f https://dl.fbaipublicfiles.com/pytorch3d/packaging/wheels/py38_cu113_pyt1110/download.html
+python download_models.py
 ```
 
-## Run demo
-**Hugging face demo:** <a href="https://huggingface.co/spaces/xiexh20/HDM-interaction-recon"  style='padding-left: 0.5rem;'><img src='https://img.shields.io/badge/%F0%9F%A4%97%20Hugging%20Face-Spaces-orange'></a><br></br>
-**Google Colab:** coming soon.
+### Download demo data
+We prepare two example sequences for quick start, one is captured by mobile phone and the other is from BEHAVE dataset. 
+Download the packed file from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=310882&version=2.0) and then do `unzip InterTrack-demo-data.zip -d demo-data `.
+Update the path to `demo-data` in command line argument `dataset.demo_data_path`. 
 
-**Gradio demo on your own machine**:
-
-Simply run with:  
+### Run demo
 ```shell
-# option 1: original DDPM inference
-python app.py 
+# Run InterTrack on mobile phone sequence 
+bash scripts/demo_phone.sh
 
-# option 2: 10x faster inference with DDIM:
-python app.py run.diffusion_scheduler=ddim run.num_inference_steps=100
+# Run InterTrack on one behave sequence
+bash scripts/demo_behave.sh
 ```
-In case of a headless remote server, you can run `python app.py run.share=True` to create a temporal public url which you can access the webpage in laptop browser. 
-
-**Command line demo**:
-
-Alternatively, you can run the demo given image path:
+After running InterTrack on the behave sequence, you can evaluate the results with:
 ```shell
-python demo.py run.image_path=<RGB image path> dataset.std_coverage=<optional, a value between 3.0 and 3.8> 
+python eval/eval_separate.py -pr outputs/corrAE/single/opt-hoi-orighdm/pred -gt outputs/stage2/single/demo-stage2/gt -split configs/splits/demo-table.json
 ```
-For example: `python demo.py run.image_path=$PWD/examples/017450/k1.color.jpg dataset.std_coverage=3.0`
-
-Similar to running `app.py`, you can speed up inference by appending `run.diffusion_scheduler=ddim run.num_inference_steps=100` to the end of the command. 
-
-[//]: # (### Hugging face demo: [HDM 🤗]&#40;&#41;)
-
-
+You should see some numbers like this: `All 679 images: hum_F-score@0.01m=0.3983  obj_F-score@0.01m=0.6754  H+O_F-score@0.01m=0.5647  CD=0.0257`
 
 ## Training
-#### Download data
-We mainly train our model on synthetic ProciGen dataset and test on real BEHAVE data. You can download them here:  [ProciGen](https://edmond.mpg.de/dataset.xhtml?persistentId=doi:10.17617/3.2VUEUS), [BEHAVE](https://virtualhumans.mpi-inf.mpg.de/behave/).
-
-Once downloaded, modify `behave_dir` and `procigen_dir` in `configs/structured.py` to your local path.  
-
-#### Pre-process data
-We provide a split file including all image names from ProciGen and test image names from BEHAVE, [download here](https://edmond.mpg.de/file.xhtml?fileId=247856&version=2.1). 
-
-To train stage 1 segmentation model, you will need to precompute the occupancy of human and object. We provide processed data for ProciGen [here](https://edmond.mpg.de/file.xhtml?fileId=247856&version=2.1). Download and unzip the file. 
-Then you can run `python scripts/process_occ.py -o <unzipped occ files> -p <ProciGen path>` to process the downloaded occupancy file. 
-
-Alternatively, you can process the sequence using: `python scripts/compute_occ.py -s <path to one sequence>`.
-
-#### Train 
-We train our stage 1 and stage 2 models separately in parallel to reduce training time. You can find example commands in `scripts/train.sh`. The checkpoint and logs will be saved to `outputs`. 
-
-The data split file can be downloaded from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=251365&version=4.0). 
+Coming soon... 
 
 ## Evaluation
-#### Pre-trained checkpoints
-We provide checkpoints for models trained only on synthetic ProciGen, download them from [here](https://datasets.d2.mpi-inf.mpg.de/cvpr24procigen/pretrained.zip). 
+Run test on the full behave dataset: coming soon...
 
-Unzip the file and place them under folder `outputs`.
-
-For more pretrained models, you can checkout our [Huggingface model card](https://huggingface.co/xiexh20/HDM-models/tree/main). 
-Specifically, `stagex-<obj>` means the original stage x model first trained on full ProciGen data and then fine tuned on synthetic data of category `<obj>`.
-`stagex-tune` means the model first trained on full ProciGen then fine tuned on training set of BEHAVE and InterCap. 
-
-#### Run inference on BEHAVE test set
-We provide example command to run batch inference at `scripts/test.sh`. Similar to training, the two stages are also run separately to reduce runtime. The example commands are 
-configured to run inference on the pretrained checkpoints. 
-
-Save as the training setup, the split file can be downloaded from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=251365&version=4.0). 
-#### Evaluate results 
-After inference is done, results can be evaluated with: 
-```shell
-python eval/eval_separate.py -pr outputs/stage2/single/<save_name>/pred -gt outputs/stage2/single/<save_name>/gt -split configs/splits/behave-test.json 
-```
-The numbers will be saved to `./results`.
-
-#### Results with DDIM inference
-From June 12, 2024 on, we support DDIM at inference time, which is 10x faster. The performance remains similar, we report the results on BEHAVE and InterCap below (F-score@0.01m):
-
-| BEHAVE | Human | Object  | Combined |
-|:-------|:-----:|:-------:|:--------:|
-| DDPM   |0.3477 | 0.4351  |  0.4110  |
-| DDIM   |0.3533 | 0.4366  | 0.4170   |
-
-| InterCap | Human | Object  | Combined |
-|:---------|:-----:|:-------:|:--------:|
-| DDPM     |0.3851 | 0.4928  |  0.4530  |
-| DDIM     |0.3835 | 0.4817  | 0.4477   |
-
-
-Note here the models are trained on synthetic ProciGen only, corresponding to *Ours synth. only* in our paper Table 2. We run DDIM for 100 steps in total with eta=1.0.  
 
 ## Citation
 If you use the code, please cite: 
 ```
+@inproceedings{xie2024InterTrack,
+    title = {InterTrack: Tracking Human Object Interaction without Object Templates},
+    author = {Xie, Xianghui and Lenssen, Jan Eric and Pons-Moll, Gerard},
+    booktitle = {International Conference on 3D Vision (3DV)},
+    month = {March},
+    year = {2025},
+}
+
 @inproceedings{xie2023template_free,
     title = {Template Free Reconstruction of Human-object Interaction with Procedural Interaction Generation},
     author = {Xie, Xianghui and Bhatnagar, Bharat Lal and Lenssen, Jan Eric and Pons-Moll, Gerard},
@@ -145,6 +96,7 @@ If you use the code, please cite:
     month = {June},
     year = {2024},
 }
+
 ```
 
 ## Acknowledgements
@@ -153,6 +105,7 @@ This project leverages the following excellent works, we thank the authors for o
 * The [PyTorch3D](https://github.com/facebookresearch/pytorch3d) library. 
 * The [diffusers](https://github.com/huggingface/diffusers) library. 
 * The [pc2](https://github.com/lukemelas/projection-conditioned-point-cloud-diffusion/tree/main) project.
+* The [smplfitter](https://github.com/isarandi/smplfitter) library from [NLF](https://virtualhumans.mpi-inf.mpg.de/nlf/). 
 
 ## License
 Please see [LICENSE](./LICENSE).

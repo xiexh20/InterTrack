@@ -8,11 +8,6 @@ Cite: Template Free Reconstruction of Human-object Interaction with Procedural I
 import pickle as pkl
 import sys, os
 from typing import Iterable, Optional
-
-from accelerate import Accelerator
-from tqdm import tqdm
-
-
 sys.path.append(os.getcwd())
 import hydra
 import torch
