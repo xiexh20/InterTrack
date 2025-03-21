@@ -15,4 +15,3 @@ wandb
 trimesh
 gradio
 pytorch3d@git+https://github.com/facebookresearch/pytorch3d.git
-git+https://github.com/isarandi/smplfitter.git
