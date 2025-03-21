@@ -13,21 +13,21 @@ Official implementation for 3DV'25 paper: InterTrack: Tracking Human Object Inte
 
 ## Contents 
 1. [Dependencies](#dependencies)
-3. [Run demo](#run-demo)
-4. [Training](#training)
-5. [Evaluation](#evaluation)
+2. [Quick start](#quick-start)
+3. [Training](#training)
+4. [Evaluation](#evaluation)
 5. [Citation](#citation)
 6. [Acknowledgements](#acknowledgements)
 7. [License](#license)
 
 ### TODO List
-- [ ] Demo code. 
-- [ ] Human registration as standard alone repo.
-- [x] Training and inference. 
-- [x] Evaluation code. 
+- [x] Demo code. 
+- [x] Human registration as standard alone repo, see [fast-human-reg](https://github.com/xiexh20/fast-human-reg).
+- [ ] Training. 
+- [ ] Full BEHAVE evaluation. 
 
 ### Updates
-- xxx, code released, hello world!  
+- March 21, 2025, code released, hello world!  
 
 ## Dependencies
 The code is tested on `torch=1.12.1+cu121, cuda12.1, debian11`. We recommend using anaconda environment:
