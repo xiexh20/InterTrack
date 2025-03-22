@@ -50,7 +50,7 @@ model.so3_eps_scale=0.5 model.so3_rot_type=abs model.lw_rot_acc=0.2 model.so3_lo
 model.pose_feat_dim=128 model.norm_layer=batch-emb model.smpl_cond_type=none dataset=behave dataset.type=behave-video-test \
 dataloader.num_workers=2 dataloader.batch_size=16  dataset.window=1 dataset.clip_len=64 run.job=sample run.save_name=vl64-avg-predvis \
 run.job=sample run.sample_save_gt=False dataset.split_file=${PWD}/configs/splits/demo-seq-table-15fps-video.pkl \
-dataset.ho_segm_pred_path=${hdm_out}
+dataset.ho_segm_pred_path=${PWD}/outputs/stage2/single/demo-stage2/pred
 
 # Step 5: optimize canonical object shape and per-frame object pose, this is the most time consuming part
 # After step 8k, the core shape is done, further optimization improves mainly the edges.

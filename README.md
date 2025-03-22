@@ -4,7 +4,7 @@ Official implementation for 3DV'25 paper: InterTrack: Tracking Human Object Inte
 
 
 <p align="left">
-<img src="https://virtualhumans.mpi-inf.mpg.de/papers/procigen-video.gif" alt="teaser" width="80%"/>
+<img src="./configs/procigen-video.gif" alt="teaser" width="80%"/>
 </p>
 
 ### Previous works: 
@@ -54,7 +54,7 @@ python download_models.py
 
 ### Download demo data
 We prepare two example sequences for quick start, one is captured by mobile phone and the other is from BEHAVE dataset. 
-Download the packed file from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=310882&version=2.0) and then do `unzip InterTrack-demo-data.zip -d demo-data `.
+Download the packed file from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=310951&version=3.0) and then do `unzip InterTrack-demo-data.zip -d demo-data `.
 Update the path to `demo-data` in command line argument `dataset.demo_data_path`. 
 
 ### Run demo
@@ -71,6 +71,7 @@ python eval/eval_separate.py -pr outputs/corrAE/single/opt-hoi-orighdm/pred -gt 
 ```
 You should see some numbers like this: `All 679 images: hum_F-score@0.01m=0.3983  obj_F-score@0.01m=0.6754  H+O_F-score@0.01m=0.5647  CD=0.0257`
 
+To run test on more BEHAVE sequences, you will need to download [this packed file](https://edmond.mpg.de/file.xhtml?fileId=310881&version=3.0) and update `behave_packed_dir` in config file. 
 ## Training
 Coming soon... 
 

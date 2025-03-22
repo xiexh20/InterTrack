@@ -581,6 +581,7 @@ class BehaveObjectVideoTestDataset(BehaveObjectVideoDataset):
     "do not load GT rotation etc."
     def init_paths(self, clip_len, seqs, window):
         "only load occlusion ratios, no thing else"
+        # return # for test on in the wild, no GT data.
         vis_path = '/BS/xxie-2/work/pc2-diff/experiments/results/images/' # path to files that have visibility computed
         self.gt_data = {}
         data_paths, start_inds, seq_index = [], [], []
@@ -591,6 +592,7 @@ class BehaveObjectVideoTestDataset(BehaveObjectVideoDataset):
                 start_inds.append(i + offset)
                 seq_index.append(sid)
             offset += len(seq)
+            continue # for test on in the wild, no GT data.
             seq_name = DataPaths.get_seq_name(seq[0])
             if seq_name in self.gt_data:
                 continue
