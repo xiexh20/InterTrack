@@ -71,7 +71,7 @@ python eval/eval_separate.py -pr outputs/corrAE/single/opt-hoi-orighdm/pred -gt 
 ```
 You should see some numbers like this: `All 679 images: hum_F-score@0.01m=0.3983  obj_F-score@0.01m=0.6754  H+O_F-score@0.01m=0.5647  CD=0.0257`
 
-To run test on more BEHAVE sequences, you will need to download [this packed file](https://edmond.mpg.de/file.xhtml?fileId=310881&version=3.0) and update `behave_packed_dir` in config file. 
+To run test on more BEHAVE sequences, you will need to download [this packed file](https://edmond.mpg.de/file.xhtml?fileId=310881&version=3.0) and update `behave_packed_dir` in config file. And prepare similar split files as `configs/splits/demo-seq-table-15fps.pkl` (for HDM recon. and optimization), and `configs/splits/demo-seq-table-15fps-video.pkl` (for object pose prediction). 
 ## Training
 Coming soon... 
 
