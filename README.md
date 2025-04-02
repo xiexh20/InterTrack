@@ -55,7 +55,7 @@ python download_models.py
 ### Download demo data
 We prepare two example sequences for quick start, one is captured by mobile phone and the other is from BEHAVE dataset. 
 Download the packed file from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=310951&version=3.0) and then do `unzip InterTrack-demo-data.zip -d demo-data `.
-Update the path to `demo-data` in command line argument `dataset.demo_data_path`. 
+Update the path to `demo-data` in `dataset.demo_data_path`, i.e. [this line](https://github.com/xiexh20/InterTrack/blob/main/configs/structured.py#L267).  
 
 ### Run demo
 ```shell
