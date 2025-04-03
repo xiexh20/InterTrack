@@ -132,7 +132,7 @@ def get_dataset(cfg: ProjectConfig):
         # pkl_file specifies the image paths without the root path, it can be downloaded from https://edmond.mpg.de/file.xhtml?fileId=251365&version=4.0
         pkl_file = cfg.dataset.split_file
         d = pkl.load(open(pkl_file, 'rb'))
-        train_paths, val_paths = [osp.join(dataset_cfg.procigen_dir, x) for x in d['train']], [osp.join(dataset_cfg.behave_dir, x) for x in d['test']]
+        train_paths, val_paths = [osp.join(dataset_cfg.procigen_dir, x) for x in d['train']], [osp.join(dataset_cfg.demo_data_path, x) for x in d['test']]
 
         # split validation/test paths to only consider the selected batches
         bs = cfg.dataloader.batch_size
@@ -211,11 +211,8 @@ def get_dataset(cfg: ProjectConfig):
         dataset_cfg: BehaveDatasetConfig = cfg.dataset
         # print(dataset_cfg.behave_dir)
         train_paths, val_paths = DataPaths.load_splits(dataset_cfg.split_file, dataset_cfg.behave_dir)
+        val_paths = [[osp.join(dataset_cfg.demo_data_path, x.replace(dataset_cfg.behave_dir, '')) for x in seq] for seq in val_paths]
         bs = cfg.dataloader.batch_size
-        # num_batches_total = int(np.ceil(len(val_paths) / cfg.dataloader.batch_size))
-        # num_batches_total = 10000000
-        # end_idx = cfg.run.batch_end if cfg.run.batch_end is not None else num_batches_total
-        # val_paths = val_paths[cfg.run.batch_start * bs:end_idx * bs]
         if cfg.dataset.type == 'behave-video':
             train_type, val_type = BehaveObjectVideoDataset, BehaveObjectVideoDataset
         elif cfg.dataset.type == 'behave-video-test':
