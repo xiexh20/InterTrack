@@ -212,7 +212,6 @@ def get_dataset(cfg: ProjectConfig):
         # print(dataset_cfg.behave_dir)
         train_paths, val_paths = DataPaths.load_splits(dataset_cfg.split_file, dataset_cfg.behave_dir)
         val_paths = [[osp.join(dataset_cfg.demo_data_path, x.replace(dataset_cfg.behave_dir, '')) for x in seq] for seq in val_paths]
-        bs = cfg.dataloader.batch_size
         if cfg.dataset.type == 'behave-video':
             train_type, val_type = BehaveObjectVideoDataset, BehaveObjectVideoDataset
         elif cfg.dataset.type == 'behave-video-test':

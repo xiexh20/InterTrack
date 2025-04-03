@@ -25,7 +25,8 @@ from model.geometry_utils import rotmat_to_6d, rot6d_to_rotmat
 from configs.structured import ProjectConfig
 from pathlib import Path
 
-from main_video import TrainerCombinedObj
+# from main_video import TrainerCombinedObj
+from main import TrainerBehave
 
 
 def clips2seq_fast(clips, step, window_size):
@@ -64,7 +65,7 @@ def clips2seq_fast(clips, step, window_size):
     return seq
 
 
-class SamplerAvgRot(TrainerCombinedObj):
+class SamplerAvgRot(TrainerBehave):
     @torch.no_grad()
     def sample(self, cfg: ProjectConfig,
                 model: torch.nn.Module,
@@ -85,43 +86,7 @@ class SamplerAvgRot(TrainerCombinedObj):
 
         assert cfg.dataset.window == 1, 'only support window size=1!'
 
-        # check done
-        # first get all image features, then divide them into batches again
-        # rgbs_all, masks_all, occ_ratios_all, batches = [], [], [], []
-        # for batch in tqdm(dataloader):
-        #     batches.append(batch)
-        #     # why would this even take GPU space???
-        #     rgbs_all.append(torch.stack(batch['images'], 0).cpu())
-        #     masks_all.append(torch.stack(batch['masks'], 0).cpu())
-        #     occ_ratios_all.append(torch.stack(batch['occ_ratios'], 0).cpu()) # this takes GPU memory!
-        #
-        # # now get a sequence
-        # tstart = time.time()
-        # step, window = 1, rgbs_all[0].shape[1]
-        # rgbs_seq = clips2seq_fast(torch.cat(rgbs_all, 0), 1, window)
-        # masks_seq = clips2seq_fast(torch.cat(masks_all, 0), 1, window)
-        # occs_seq =  clips2seq_fast(torch.cat(occ_ratios_all, 0), 1, window)
-        # tend = time.time()
-        # print(f"Time to compute avg sequence: {tend-tstart:.4f}")
-        # # now compute features
-        # bs = 32
-        # feats_all = []
-        # for i in range(0, len(rgbs_seq), bs):
-        #     feat = model.extract_features(rgbs_seq[i:i+bs][None].to('cuda'),
-        #                                   masks_seq[i:i+bs][None].to('cuda'),
-        #                                   occs_seq[i:i+bs][None].to('cuda'))
-        #     feats_all.append(feat[0])
-        # feats_seq = torch.cat(feats_all, 0)
-        # print(f'Time to compute all features {time.time()-tend:.4f}')
-
-        # add syn link first
-        # add synlink
         os.makedirs(output_dir, exist_ok=True)
-        # for pat in ['images', 'gt']:
-        #     syn_file = output_dir / pat
-        #     if not osp.islink(str(syn_file)):
-        #         cmd = f'ln -s /BS/xxie-2/work/pc2-diff/experiments/outputs/so3_reg-dinotune-16-scale0.5bemb/single/15fps/{pat} {str(syn_file)}'
-        #         os.system(cmd)
 
         for bid, batch in enumerate(tqdm(dataloader)):
             for file_list in batch['image_path']:
