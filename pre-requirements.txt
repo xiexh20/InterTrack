@@ -17,4 +17,5 @@ trimesh==3.21.6
 gradio
 Flask-SQLAlchemy
 scikit-learn
+imageio-ffmpeg
 git+https://github.com/mattloper/chumpy

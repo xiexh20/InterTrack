@@ -87,25 +87,12 @@ class TrainerObjOpt(TrainerCrossAttnHO):
         from model.pvcnn.pvcnn_enc import PVCNNAutoEncoder
         model_ae = model
         model_ae.eval()
-        # model_ae = PVCNNAutoEncoder(1024,
-        #                             6,
-        #                             [512, 256],
-        #                             1500,
-        #                             -1).to(device)
-        # ckpt = torch.load('/BS/xxie-2/work/pc2-diff/experiments/outputs/aev1-chair/single/checkpoint-latest.pth')
-        # model_ae.eval()
-        # state_dict = ckpt['model']
-        # if any(k.startswith('module.') for k in state_dict.keys()):
-        #     state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
-        # missing_keys, unexpected_keys = model_ae.load_state_dict(state_dict, strict=True)
         output_dir: Path = Path(output_dir)
         self.no_ae, DEBUG = cfg.model.obj_opt_noae, False
         import socket; DEBUG = 'volta' in socket.gethostname()
 
         seq_name = self.extract_seq_name(cfg)
-        # seq_name = osp.splitext(osp.basename(split_file))[0].split('-')[1] # TODO: update this seq_name
 
-        # seq_name = 'Aug09_xianghui_chairwood_01'
         if 'sit' in seq_name:
             cfg.model.obj_opt_occ_thres = min(0.5, cfg.model.obj_opt_occ_thres)
             if seq_name == 'Date03_Sub03_chairblack_sit':
@@ -121,7 +108,7 @@ class TrainerObjOpt(TrainerCrossAttnHO):
               f"lr={cfg.model.obj_opt_lr}, opt occlusion threshold: {cfg.model.obj_opt_occ_thres}, No AE? {cfg.model.obj_opt_noae}")
         if osp.isfile(ckpt_file):
             print(f"Loading from {ckpt_file}")
-            ckpt = torch.load(ckpt_file, map_location=self.device)
+            ckpt = torch.load(ckpt_file, map_location=self.device, weights_only=False)
             latent = ckpt['latents'].requires_grad_(True)
 
             obj_rot_axis, obj_scale, obj_trans, optimizer, scheduler, train_state = self.prep_obj_optimization(cfg,

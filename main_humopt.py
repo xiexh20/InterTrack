@@ -63,7 +63,7 @@ class TrainerHumOpt(TrainerObjOpt):
         ckpt_file = output_dir / f'checkpoint-{seq_name}_k{cfg.dataset.cam_id}.pth'  # ckpt+seq_name
         if osp.isfile(ckpt_file):
             print(f"Loading from {ckpt_file}")
-            ckpt = torch.load(ckpt_file, map_location=self.device)
+            ckpt = torch.load(ckpt_file, map_location=self.device, weights_only=False)
             latent_hum = ckpt['latents_hum']
             train_state = ckpt['train_state']
         else:

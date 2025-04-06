@@ -65,7 +65,7 @@ class TrainerHOISMPLOpt(TrainerHOIOpt):
         # Load checkpoint
         if osp.isfile(ckpt_file):
             print(f"Loading from {ckpt_file}")
-            ckpt = torch.load(ckpt_file, map_location=self.device)
+            ckpt = torch.load(ckpt_file, map_location=self.device, weights_only=False)
 
             # object optimizer
             latent_obj = ckpt['latents']
