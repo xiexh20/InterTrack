@@ -13,6 +13,8 @@ torch-ema
 tqdm
 transformers
 wandb
-trimesh
+trimesh==3.21.6
 gradio
-
+Flask-SQLAlchemy
+scikit-learn
+git+https://github.com/mattloper/chumpy

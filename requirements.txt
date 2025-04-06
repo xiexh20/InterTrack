@@ -12,6 +12,5 @@ torch-ema
 tqdm
 transformers
 wandb
-trimesh
 gradio
 pytorch3d@git+https://github.com/facebookresearch/pytorch3d.git
