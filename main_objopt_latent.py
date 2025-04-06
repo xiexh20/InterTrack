@@ -162,15 +162,12 @@ class TrainerObjOpt(TrainerCrossAttnHO):
         num_batches = len(dataloader)
         batch_size = cfg.dataloader.batch_size
 
-        # then also load object occlusion ratios, which will be used to filter out bad pose predictions
-        # occ_ratios = self.load_occ_ratios(seq_name) # TODO: compute this online? or integrate it into the HDM sampling results?
-
         # Load from metadata directly
         hdm_out = cfg.dataset.ho_segm_pred_path
         meta_files = sorted(glob.glob(osp.join(hdm_out.replace('/pred', '/metadata'), seq_name, '*.pth')))
         occ_ratios = {}
         for file in meta_files:
-            meta = torch.load(file)
+            meta = torch.load(file, weights_only=False)
             frame = osp.splitext(osp.basename(file))[0]
             occ_ratios[frame] = meta['obj_visibility']
 
@@ -183,12 +180,13 @@ class TrainerObjOpt(TrainerCrossAttnHO):
                                     [1024,512],
                                     2048,
                                     -1).to(device)
-        ckpt = torch.load('/BS/xxie-2/work/pc2-diff/experiments/outputs/aligned-all-2k-noise0.1/single/checkpoint-latest.pth')
         model_ae.eval()
-        state_dict = ckpt['model']
-        if any(k.startswith('module.') for k in state_dict.keys()):
-            state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
-        model_ae.load_state_dict(state_dict, strict=True)
+
+        # ckpt = torch.load('/BS/xxie-2/work/pc2-diff/experiments/outputs/aligned-all-2k-noise0.1/single/checkpoint-latest.pth')
+        # state_dict = ckpt['model']
+        # if any(k.startswith('module.') for k in state_dict.keys()):
+        #     state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
+        # model_ae.load_state_dict(state_dict, strict=True)
         self.model = model_ae
         assert torch.allclose(torch.tensor(batches_all['frame_index']), torch.arange(seq_len)), f'the frame order is incorrect: {seq_len}, {batches_all["frame_index"]}'
 

@@ -416,7 +416,7 @@ class BehaveObjectVideoDataset(BehaveDataset):
                 print(f"Warning: {pred_file} does not exist! use dummy rotation")
                 rot_pred = np.eye(3)
             else:
-                rot_pred = torch.load(pred_file, map_location='cpu')['rotation'].numpy()
+                rot_pred = torch.load(pred_file, map_location='cpu', weights_only=False)['rotation'].numpy()
             pred_pose = np.eye(4)
             pred_pose[:3, :3] = rot_pred
             pred_poses.append(pred_pose)
@@ -637,7 +637,7 @@ class BehaveObjectVideoTestDataset(BehaveObjectVideoDataset):
             # Get object visibility ratio
             ss = rgb_file.split(os.sep)
             pred_file = osp.join(self.ho_segm_pred_path.replace('/pred', '/metadata'), ss[-3], ss[-2] + ".pth")
-            occ_ratios[i] = float(torch.load(pred_file, map_location='cpu')['obj_visibility'])
+            occ_ratios[i] = float(torch.load(pred_file, map_location='cpu', weights_only=False)['obj_visibility'])
 
 
         rela_poses = torch.from_numpy(transforms).float()

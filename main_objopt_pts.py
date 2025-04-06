@@ -4,7 +4,7 @@ optimize the raw point clouds, with some better loss parameters
 
 import pickle as pkl
 import sys, os
-os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb=512'
+# os.environ['PYTORCH_CUDA_ALLOC_CONF'] = 'max_split_size_mb=512'
 import time
 from typing import Iterable, Optional, Any
 

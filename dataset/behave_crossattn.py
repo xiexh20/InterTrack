@@ -176,7 +176,7 @@ class BehaveCrossAttnDataset(BehaveDataset):
             # load predicted object rotation/translation
             ss = rgb_file.split(os.sep)
             pred_file = osp.join(self.pred_obj_pose_path, ss[-3], ss[-2] + ".pth")
-            rot_pred = torch.load(pred_file, map_location='cpu')['rotation']
+            rot_pred = torch.load(pred_file, map_location='cpu', weights_only=False)['rotation']
             data_dict = {
                 **data_dict,
                 'rot_pred': rot_pred.float()

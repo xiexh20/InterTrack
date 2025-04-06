@@ -17,7 +17,7 @@ class DataPaths:
 
     @staticmethod
     def load_splits(split_file, dataset_path=None):
-        assert os.path.exists(dataset_path), f'the given dataset path {dataset_path} does not exist, please check if your training data are placed over there!'
+        # assert os.path.exists(dataset_path), f'the given dataset path {dataset_path} does not exist, please check if your training data are placed over there!'
         train, val = DataPaths.get_train_test_from_pkl(split_file)
         if isinstance(train[0], list):
             # video data
