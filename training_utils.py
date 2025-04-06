@@ -301,7 +301,7 @@ def resume_from_checkpoint(cfg: ProjectConfig, model, optimizer=None, scheduler=
 
     # If resuming, load model state dict
     print(f'Loading checkpoint ({datetime.datetime.now()})')
-    checkpoint = torch.load(cfg.checkpoint.resume, map_location='cpu')
+    checkpoint = torch.load(cfg.checkpoint.resume, map_location='cpu', weights_only=False)
     if 'model' in checkpoint:
         state_dict, key = checkpoint['model'], 'model'
     else:

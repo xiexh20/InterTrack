@@ -8,7 +8,6 @@ sys.path.append(os.getcwd())
 import numpy as np
 from behave.seq_utils import SeqInfo
 from behave.utils import load_intrinsics, load_kinect_poses_back, load_kinect_poses
-from psbody.mesh import Mesh
 
 def inverse_Rt(r, t):
     "compute inverse transformation for the given R and t"
@@ -37,37 +36,6 @@ class KinectTransform:
         Rt = [inverse_Rt(r, t) for r, t in zip(rot, trans)]
         rot, trans = [x[0] for x in Rt], [x[1] for x in Rt]
         self.world2local_R, self.world2local_t = rot, trans
-
-    def world2color_mesh(self, mesh:Mesh, kid):
-        "world coordinate to local color coordinate, assume mesh world coordinate is in k1 color camera coordinate"
-        m = self.copy_mesh(mesh)
-        m.v = np.matmul(mesh.v, self.world2local_R[kid].T) + self.world2local_t[kid]
-        return m
-
-    def flip_mesh(self, mesh:Mesh):
-        "flip the mesh along x axis"
-        m = self.copy_mesh(mesh)
-        m.v[:, 0] = -m.v[:, 0]
-        return m
-
-    def copy_mesh(self, mesh:Mesh):
-        m = Mesh(v=mesh.v)
-        if hasattr(mesh, 'f'):
-            m.f = mesh.f.copy()
-        if hasattr(mesh, 'vc'):
-            m.vc = np.array(mesh.vc)
-        return m
-
-    def world2local_meshes(self, meshes, kid):
-        transformed = []
-        for m in meshes:
-            transformed.append(self.world2color_mesh(m, kid))
-        return transformed
-
-    def local2world_mesh(self, mesh, kid):
-        m = self.copy_mesh(mesh)
-        m.v = self.local2world(m.v, kid)
-        return m
 
     def world2local(self, points, kid):
         return np.matmul(points, self.world2local_R[kid].T) + self.world2local_t[kid]

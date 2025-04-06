@@ -8,7 +8,7 @@ Cite: CHORE: Contact, Human and Object REconstruction from a single RGB image. E
 import numpy as np
 import sys, os
 sys.path.append(os.getcwd())
-from psbody.mesh import Mesh
+from behave.mesh import Mesh
 import torch
 
 from lib_smpl.th_hand_prior import mean_hand_pose

@@ -10,11 +10,8 @@ import os.path as osp
 import numpy as np
 import cv2, trimesh
 import torch
-import igl
 import pickle as pkl
-from sklearn.neighbors import KDTree
 from torch.utils.data import Dataset
-from sklearn.neighbors import NearestNeighbors
 import time
 
 from PIL import Image

@@ -8,7 +8,7 @@ import json
 from os.path import join, basename, dirname
 import numpy as np
 import os.path as osp
-from psbody.mesh import Mesh
+# from psbody.mesh import Mesh
 
 
 def rotate_yaxis(R, t):

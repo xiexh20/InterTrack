@@ -32,7 +32,7 @@ Official implementation for 3DV'25 paper: InterTrack: Tracking Human Object Inte
 ## Dependencies
 The code is tested on `torch=1.12.1+cu121, cuda12.1, debian11`. We recommend using anaconda environment:
 ```shell
-conda create -n intertrack python=3.8
+conda create -n intertrack python=3.10
 conda activate intertrack 
 ```
 Required packages can be installed by:
@@ -64,6 +64,7 @@ We prepare two example sequences for quick start, one is captured by mobile phon
 Download the packed file from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=310951&version=3.0) and then do `unzip InterTrack-demo-data.zip -d demo-data `. 
 Once downloaded, update the values of these paths: (use absolute path)
 - The path to `demo-data` in `dataset.demo_data_path`, i.e. [this line](https://github.com/xiexh20/InterTrack/blob/main/configs/structured.py#L267).
+- The path to packed data in `dataset.behave_packed_dir`, i.e. [this line](https://github.com/xiexh20/InterTrack/blob/main/configs/structured.py#L266), modify this to `demo-data/packed`.
 - The path to SMPL assets, i.e. set `SMPL_ASSETS_ROOT` to `demo-data/assets` in `lib_smpl/const.py`.
   
 
@@ -81,7 +82,7 @@ python eval/eval_separate.py -pr outputs/corrAE/single/opt-hoi-orighdm/pred -gt 
 ```
 You should see some numbers like this: `All 679 images: hum_F-score@0.01m=0.3983  obj_F-score@0.01m=0.6754  H+O_F-score@0.01m=0.5647  CD=0.0257`
 
-To run test on more BEHAVE sequences, you will need to download [this packed file](https://edmond.mpg.de/file.xhtml?fileId=310881&version=3.0) and update `behave_packed_dir` in config file. And prepare similar split files as `configs/splits/demo-seq-table-15fps.pkl` (for HDM recon. and optimization), and `configs/splits/demo-seq-table-15fps-video.pkl` (for object pose prediction). 
+To run test on more BEHAVE sequences, you will need to download [this packed file](https://edmond.mpg.de/file.xhtml?fileId=310881&version=3.0) and update `behave_packed_dir` in `configs/structured.py` file. And prepare similar split files as `configs/splits/demo-seq-table-15fps.pkl` (for HDM recon. and optimization), and `configs/splits/demo-seq-table-15fps-video.pkl` (for object pose prediction). 
 ## Training
 Coming soon... 
 

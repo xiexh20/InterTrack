@@ -8,7 +8,7 @@ Cite: CHORE: Contact, Human and Object REconstruction from a single RGB image. E
 import pickle as pkl
 from os.path import join
 
-from psbody.mesh import Mesh
+from behave.mesh import Mesh
 from scipy import sparse
 import torch
 

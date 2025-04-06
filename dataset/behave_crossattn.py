@@ -10,18 +10,10 @@ import os.path as osp
 import numpy as np
 import cv2, trimesh
 import torch
-import igl
-import pickle as pkl
-from sklearn.neighbors import KDTree
-from torch.utils.data import Dataset
-from sklearn.neighbors import NearestNeighbors
 import time
 
 from .behave_paths import DataPaths, date_seqs
-from behave.kinect_transform import KinectTransform
-from .utils import create_grid_points
 from .behave_dataset import BehaveDataset
-from .img_utils import compute_translation
 from .img_utils import compute_translation, crop, masks2bbox, resize
 
 class BehaveCrossAttnDataset(BehaveDataset):
