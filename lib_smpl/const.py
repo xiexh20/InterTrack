@@ -3,7 +3,7 @@ some constants for smpl and smplh models
 created by Xianghui, 12, January, 2022
 """
 
-SMPL_ASSETS_ROOT="/BS/xxie-2/work/chore-video/assets"
+SMPL_ASSETS_ROOT="/BS/xxie-2/static00/InterTrack-demo-data/assets"
 SMPL_MODEL_ROOT="/BS/xxie2020/static00/mysmpl/smplh"
 
 # related to smpl and smplh parameter count

@@ -42,8 +42,15 @@ pip install -r requirements.txt     # Install pytorch3d from source
 ```
 
 **SMPL body models**: We use SMPL-H (mano_v1.2) from [this website](https://mano.is.tue.mpg.de/download.php). 
-Download and unzip to a local path and modify in SMPL_MODEL_ROOT in `lib_smpl/const.py`.
-
+Download and unzip to a local path and modify in `SMPL_MODEL_ROOT` in `lib_smpl/const.py`.
+To use the [smplfitter](https://github.com/isarandi/smplfitter), we also need a `kid_template.npy` file, see [this doc](https://github.com/isarandi/smplfitter?tab=readme-ov-file#download-body-model-files).
+To run our code, login to the AGORA project path, download the `smpl_kid_template.npy` via SMIL/SMIL-X template->SMIL(SMPL formate), and rename it to `kid_template.npy`. In the end, the file structure should be this:
+```shell
+SMPL_MODEL_ROOT
+|--kid_template.npy
+|--SMPLH_FEMALE.pkl
+|--SMPLH_MALE.pkl
+```
 
 
 ## Quick start
@@ -54,8 +61,11 @@ python download_models.py
 
 ### Download demo data
 We prepare two example sequences for quick start, one is captured by mobile phone and the other is from BEHAVE dataset. 
-Download the packed file from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=310951&version=3.0) and then do `unzip InterTrack-demo-data.zip -d demo-data `.
-Update the path to `demo-data` in `dataset.demo_data_path`, i.e. [this line](https://github.com/xiexh20/InterTrack/blob/main/configs/structured.py#L267).  
+Download the packed file from [Edmond](https://edmond.mpg.de/file.xhtml?fileId=310951&version=3.0) and then do `unzip InterTrack-demo-data.zip -d demo-data `. 
+Once downloaded, update the values of these paths: (use absolute path)
+- The path to `demo-data` in `dataset.demo_data_path`, i.e. [this line](https://github.com/xiexh20/InterTrack/blob/main/configs/structured.py#L267).
+- The path to SMPL assets, i.e. set `SMPL_ASSETS_ROOT` to `demo-data/assets` in `lib_smpl/const.py`.
+  
 
 ### Run demo
 ```shell

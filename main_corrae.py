@@ -210,8 +210,9 @@ class TrainerAutoencoder(TrainerBehave):
 
         # init SMPL fitter
         from smplfitter.pt import BodyModel, BodyFitter
+        from lib_smpl.const import SMPL_MODEL_ROOT
         body_model = BodyModel('smplh', 'male',
-                               model_root='/BS/xxie2020/static00/mysmpl/smplh').to('cuda')  # create the body model to be fitted
+                               model_root=SMPL_MODEL_ROOT).to('cuda')  # create the body model to be fitted
         fitter = BodyFitter(body_model, num_betas=10).to('cuda')
 
         # Visualize
