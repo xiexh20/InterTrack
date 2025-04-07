@@ -19,3 +19,4 @@ Flask-SQLAlchemy
 scikit-learn
 imageio-ffmpeg
 git+https://github.com/mattloper/chumpy
+tabulate
