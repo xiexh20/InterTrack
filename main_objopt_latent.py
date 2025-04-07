@@ -164,12 +164,7 @@ class TrainerObjOpt(TrainerCrossAttnHO):
 
         # Load from metadata directly
         hdm_out = cfg.dataset.ho_segm_pred_path
-        meta_files = sorted(glob.glob(osp.join(hdm_out.replace('/pred', '/metadata'), seq_name, '*.pth')))
-        occ_ratios = {}
-        for file in meta_files:
-            meta = torch.load(file, weights_only=False)
-            frame = osp.splitext(osp.basename(file))[0]
-            occ_ratios[frame] = meta['obj_visibility']
+        occ_ratios = self.load_occ_ratios(hdm_out, seq_name)
 
         self.occ_ratios = occ_ratios
 
@@ -488,6 +483,15 @@ class TrainerObjOpt(TrainerCrossAttnHO):
                 train_state.step += 1
             train_state.epoch += 1
 
+    def load_occ_ratios(self, hdm_out, seq_name):
+        meta_files = sorted(glob.glob(osp.join(hdm_out.replace('/pred', '/metadata'), seq_name, '*.pth')))
+        occ_ratios = {}
+        for file in meta_files:
+            meta = torch.load(file, weights_only=False)
+            frame = osp.splitext(osp.basename(file))[0]
+            occ_ratios[frame] = meta['obj_visibility']
+        return occ_ratios
+
     def extract_seq_name(self, cfg):
         "extract the sequence name for this optimization"
         split_file = str(cfg.dataset.split_file)
@@ -543,17 +547,6 @@ class TrainerObjOpt(TrainerCrossAttnHO):
         edges_dt = [distance_transform_edt(1 - (mask_edge > 0)) ** (0.5) for mask_edge in edges_ref.cpu().numpy()]
         edges_dt = torch.from_numpy(np.stack(edges_dt)).float()
         return edges_dt, keep_mask, mask_ref
-
-    def load_occ_ratios(self, seq_name):
-        pack_file = f'/scratch/inf0/user/xxie/behave-packed/{seq_name}_GT-packed.pkl'
-        if osp.isfile(pack_file):
-            pack_data = joblib.load(pack_file)
-            occ_ratios = {k: v for k, v in zip(pack_data['frames'], pack_data['occ_ratios'][:, 1])}
-        else:
-            pack_data = pkl.load(open(f'/BS/xxie-2/work/pc2-diff/experiments/results/images/{seq_name}_proj_vis_reso512.pkl', 'rb'))
-            occ_ratios = {k: v for k, v in zip(pack_data['frames'], pack_data['vis_hdm'])}
-
-        return occ_ratios
 
     def prep_obj_optimization(self, cfg, ckpt, device, latent):
         opt_obj_trans = cfg.model.obj_opt_t
@@ -650,24 +643,6 @@ class TrainerObjOpt(TrainerCrossAttnHO):
             params.append(obj_scale)
         assert len(params) >=1, 'must select one parameter to optimize!'
         optimizer = optim.Adam(params, lr=cfg.model.obj_opt_lr)
-        # if opt_obj_trans and opt_obj_rot:
-        #     obj_trans = torch.zeros(750, 3).to(device).requires_grad_(True)
-        #     obj_rot_axis = torch.zeros(750, 3).to(device).requires_grad_(True)
-        #     params = [latent, obj_trans, obj_rot_axis]
-        #     optimizer = optim.Adam(params, lr=0.0006)
-        # elif opt_obj_trans and not opt_obj_rot:
-        #     obj_trans = torch.zeros(750, 3).to(device).requires_grad_(True)
-        #     obj_rot_axis = torch.zeros(750, 3).to(device)
-        #     optimizer = optim.Adam([latent, obj_trans], lr=0.0006)
-        # elif opt_obj_rot and not opt_obj_trans:
-        #     # only optimize rotation
-        #     obj_rot_axis = torch.zeros(750, 3).to(device).requires_grad_(True)
-        #     optimizer = optim.Adam([latent, obj_rot_axis], lr=0.0006)
-        #     obj_trans = torch.zeros(750, 3).to(device)
-        # else:
-        #     obj_trans = torch.zeros(750, 3).to(device)  # no grad, no optimization
-        #     obj_rot_axis = torch.zeros(750, 3).to(device)
-        #     optimizer = optim.Adam([latent], lr=0.0006)
         return obj_rot_axis, obj_trans, obj_scale, optimizer
 
     def init_obj_scale(self, device, opt_obj_scale):

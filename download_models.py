@@ -25,4 +25,4 @@ for file, exp in zip(ckpt_files, exp_names):
     ckpt_file = hf_hub_download("xiexh20/HDM-models", file)
     outdir = f'outputs/{exp}/single'
     os.makedirs(outdir, exist_ok=True)
-    os.system(f'ln -s {ckpt_file} {outdir}/checkpoint-latest.pth')
+    os.system(f'ln -sf {ckpt_file} {outdir}/checkpoint-latest.pth')

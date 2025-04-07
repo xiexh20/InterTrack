@@ -166,7 +166,8 @@ class TrainerHOIOpt(TrainerObjOptPoints):
         if osp.isfile(ckpt_file):
             scheduler_hum.load_state_dict(ckpt['scheduler_hum'])
             optimizer_hum.load_state_dict(ckpt['optimizer_hum'])
-        occ_ratios = self.load_occ_ratios(seq_name)
+        hdm_out = cfg.dataset.ho_segm_pred_path
+        occ_ratios = self.load_occ_ratios(hdm_out, seq_name)
         self.occ_ratios = occ_ratios
 
         # logging

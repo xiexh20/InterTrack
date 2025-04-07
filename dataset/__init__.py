@@ -142,7 +142,7 @@ def get_dataset(cfg: ProjectConfig):
 
         if cfg.dataset.type == 'behave':
             train_type = BehaveDataset
-            val_datatype = BehaveDataset if 'ntu' not in dataset_cfg.split_file else None
+            val_datatype = BehaveDataset
         elif cfg.dataset.type == 'behave-test':
             train_type = BehaveDataset
             val_datatype = BehaveTestOnly

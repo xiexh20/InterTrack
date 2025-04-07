@@ -84,7 +84,7 @@ class TrainerHOISMPLOpt(TrainerHOIOpt):
             print(ckpt_file, 'does not exist!')
             ckpt_file_obj = osp.join(cfg.dataset.hoi_opt_obj_shape_path,
                                      f'checkpoint-{seq_name}_k{cfg.dataset.cam_id}.pth')
-            ckpt_obj = torch.load(ckpt_file_obj, map_location=self.device)
+            ckpt_obj = torch.load(ckpt_file_obj, map_location=self.device, weights_only=False)
             latent_obj = ckpt_obj['latents']
 
             # filter out outlier points
@@ -108,7 +108,7 @@ class TrainerHOISMPLOpt(TrainerHOIOpt):
             # load human state from ckpt
             ckpt_file_hum = osp.join(cfg.dataset.hoi_opt_hum_shape_path,
                                      f'checkpoint-{seq_name}_k{cfg.dataset.cam_id}.pth')
-            ckpt_hum = torch.load(ckpt_file_hum, map_location=self.device)
+            ckpt_hum = torch.load(ckpt_file_hum, map_location=self.device, weights_only=False)
             poses_hum, betas_hum, transl_smplh = ckpt_hum['poses_hum'], ckpt_hum['betas_hum'], ckpt_hum['transl_smpl']
             hum_trans, hum_scale = ckpt_hum['hum_trans'], ckpt_hum['hum_scale']
             scales_smplh, centers_smplh = ckpt_hum['scales_smplh_aligned'], ckpt_hum['centers_smplh_aligned']
@@ -151,7 +151,9 @@ class TrainerHOISMPLOpt(TrainerHOIOpt):
         if osp.isfile(ckpt_file) and optimize_hum:
             scheduler_hum.load_state_dict(ckpt['scheduler_hum'])
             optimizer_hum.load_state_dict(ckpt['optimizer_hum'])
-        occ_ratios = self.load_occ_ratios(seq_name)
+        # occ_ratios = self.load_occ_ratios(seq_name)
+        hdm_out = cfg.dataset.ho_segm_pred_path
+        occ_ratios = self.load_occ_ratios(hdm_out, seq_name)
         self.occ_ratios = occ_ratios
 
         # logging
