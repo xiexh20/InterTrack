@@ -30,7 +30,8 @@ Official implementation for 3DV'25 paper: InterTrack: Tracking Human Object Inte
 - March 21, 2025, code released, hello world!  
 
 ## Dependencies
-The code is tested on `torch=1.12.1+cu121, cuda12.1, debian11`. We recommend using anaconda environment:
+The code is tested on `torch=2.4.1+cu121, cuda12.1, debian11`. In general it should work with torch + cuda 12.1.
+We recommend using anaconda environment:
 ```shell
 conda create -n intertrack python=3.10
 conda activate intertrack 
