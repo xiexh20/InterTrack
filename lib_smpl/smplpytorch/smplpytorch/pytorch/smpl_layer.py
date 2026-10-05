@@ -74,7 +74,7 @@ class SMPL_Layer(Module):
                 th_pose_axisang,
                 th_betas=torch.zeros(1),
                 th_trans=torch.zeros(1, 3),
-                th_offsets=None, scale=1.):
+                th_offsets=None, scale=1., ret_glb_rot=False):
         """
         Args:
         th_pose_axisang (Tensor (batch_size x 72)): pose parameters in axis-angle representation
@@ -170,6 +170,10 @@ class SMPL_Layer(Module):
         # XH: not doing shift, apply translation instead
         th_jtr = th_jtr + th_trans.unsqueeze(1)
         th_verts = th_verts + th_trans.unsqueeze(1)
+
+        if ret_glb_rot:
+            # also return the global rotation of each joint, (B, J, 3, 3)
+            return th_verts, th_jtr, th_v_posed, naked, torch.stack(th_results_global, dim=1)[:, :, :3, :3]
 
         # Vertices and joints in meters
         return th_verts, th_jtr, th_v_posed, naked

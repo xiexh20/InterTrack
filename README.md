@@ -94,6 +94,17 @@ Some notes regarding reproducing the results in paper:
 
 Run test on the full behave dataset: coming soon...
 
+### Evaluation without GT translation (InterCap, 21 sequences)
+`eval/eval_rot_chamf.py` evaluates results obtained with estimated 2D translation (see `scripts/demo_phone.sh`). Predictions are brought back to metric camera space and aligned to GT with one similarity transform computed from the SMPL vertices of the first frame of each sequence. It reports Chamfer distance and F-score (human, object, combined), SMPL errors, object rotation and translation errors, acceleration and jitter errors, and hand contact accuracy.
+```shell
+# step 1, once: compute SMPL vertices and joints for prediction and GT, saved as checkpoint-<seq>_k1_smpl.pth
+python eval/eval_rot_chamf.py --precompute -pr <output dir>/pred --packed_path <packed GT dir> --smpl_root <SMPL-H model dir>
+# step 2: evaluation
+python eval/eval_rot_chamf.py -pr <output dir>/pred --packed_path <packed GT dir> --icap_template_path <InterCap object templates dir> --smpl_root <SMPL-H model dir> -i intercap
+```
+`<output dir>` is the folder written by the joint optimization (`main_hoiopt_smplh.py`), containing `pred/` and `checkpoint-<seq>_k1.pth`. The sequences are listed in `configs/splits/intercap-seqs-21.json`; the frames (15fps), camera transforms and selected views are in `configs/splits/seqs`, `configs/splits/w2cs_all.pkl` and `configs/splits/selected-views-map.json`. The InterCap object templates are expected as `01.ply`, `02.ply`, ... in `--icap_template_path`.
+
+
 
 ## Citation
 If you use the code, please cite: 
